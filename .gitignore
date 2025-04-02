@@ -1,0 +1,14 @@
+# Environment variables
+.env
+
+# Node modules
+node_modules/
+
+# TypeScript compiled output
+dist/
+
+# Log files
+*.log
+
+# Archive directory for messages
+message_archive/ 
