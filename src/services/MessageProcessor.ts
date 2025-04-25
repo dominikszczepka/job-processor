@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import dotenv from 'dotenv';
 import Record from '../models/Record';
 import sequelize from '../config/database';
+import { PromptsGenerator } from "./PromptsGenerator";
 
 dotenv.config();
 
@@ -19,7 +20,8 @@ export class MessageProcessor {
     async processMessage(message: any): Promise<void> {
         await this.archivizeMessage(message); // Call archive logic
         
-        const prompt = `${message}`; // Placeholder - update with proper prompt formatting
+        const promptsGenerator = new PromptsGenerator(); // Create an instance
+        const prompt = promptsGenerator.generateJobOfferPrompt(message); // Call on the instance
         const response = await this.ai.models.generateContent({
             model: "gemma-3-27b-it",
             contents: prompt,
