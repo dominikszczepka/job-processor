@@ -5,11 +5,15 @@ Instructions:
 1. Analyze the "Raw Job Offer Data".
 2. Populate the fields in the "Target JSON Structure" based on the analyzed data.
 3. Infer data types where possible (e.g., numbers for salary values, booleans for flags, ISO 8601 for timestamps). Use standard 3-letter currency codes (e.g., "USD", "EUR"). Standardize salary periods (e.g., "yearly", "monthly", "hourly").
-4. For nested objects (\`company\`, \`location\`, \`salary\`, \`category\`, \`field\`), extract the relevant details. If a nested object's data is entirely missing, you *can* omit the object key (e.g., omit \`"field": {}\` if no field info is found).
+4. For nested objects (\`company\`, \`location\`, \`salary\`, \`industry\`, \`profession\`), extract the relevant details. If a nested object's data is entirely missing, you *can* omit the object key (e.g., omit \`"profession": {}\` if no profession info is found).
 5. For arrays (\`benefits\`, \`requirements\`, \`work_modes\`, \`contract_types\`, \`keywords\`), list the identified items as strings. If none are found, use an empty array \`[]\`.
-6. Use \`null\` for optional fields where data is missing or cannot be determined (e.g., \`company.description\`, \`location.latitude\`).
-7. Prioritize accuracy and completeness based *only* on the provided raw data.
-8. Output *only* the final JSON object (\`json\`).
+6. For Keywords array, extract relevant keywords from the Raw Job Offer Data.
+7. For Benefits, requirements and keywords make sure all entries are logically divided and use verbless sentences in polish.
+8. For Description, make sure to come up with the most relevant description of the Raw Job Offer Data. 
+9. For Industry, make sure to come up with the most relevant industry based on the Raw Job Offer Data. 
+9. Use \`null\` for optional fields where data is missing or cannot be determined (e.g., \`company.description\`, \`location.latitude\`).
+10. Prioritize accuracy and completeness based *only* on the provided raw data.
+11. Output *only* the final JSON object (\`json\`).
 
 Target JSON Structure:
 {
@@ -33,7 +37,7 @@ Target JSON Structure:
       "city": "string_or_null",
       "latitude": null, // number_or_null
       "longitude": null, // number_or_null
-      "iso_code": "2_letter_string_or_null"
+      "country_iso_code": "2_letter_string_or_null"
     }
   },
 
@@ -42,21 +46,22 @@ Target JSON Structure:
     "city": "string_or_null",
     "latitude": null, // number_or_null
     "longitude": null, // number_or_null
-    "iso_code": "2_letter_string_or_null"
+    "country_iso_code": "2_letter_string_or_null"
   },
 
   "salary": {
     "min_value": null, // number_or_null
     "max_value": null, // number_or_null
     "currency": "3_letter_code_or_null", // e.g., "USD", "EUR"
+    "type": "NET", // e.g., "GROSS", "NET"
     "period": "string_or_null" // e.g., "yearly", "monthly", "hourly"
   },
 
-  "category": { // Primary job category
+  "industry": { // Primary job industry
     "name": "string_or_null"
   },
 
-  "field": { // Primary job field/industry
+  "profession": { // Primary job profession
     "name": "string_or_null"
   },
 
