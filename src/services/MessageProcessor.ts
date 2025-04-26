@@ -93,16 +93,17 @@ export class MessageProcessor {
             },
             body: JSON.stringify({
                 "model": "gemma3:27b",
-                "prompt": prompt
+                "prompt": prompt,
+                "stream": false
             }),
         });
-        const response = await apiResponse.json();
-        if (!response.text)
+        const response_body = await apiResponse.json();
+        if (!response_body.response)
             throw Error('Returned no text from LLM Api');
 
         const transaction = await sequelize.transaction();
         try {
-            const record = JSON.parse(response.text);
+            const record = JSON.parse(response_body.response);
             // Ensure record contains externalId before creating
             if (!record || typeof record.externalId !== 'string') {
                 throw new Error('Invalid record format: externalId is missing or not a string.');
