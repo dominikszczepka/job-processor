@@ -20,7 +20,7 @@ async function main() {
 
     // Start consuming messages
     console.log('Starting to consume messages...');
-    await queueService.consume(messageProcessor.processMessage);
+    await queueService.consume(messageProcessor.processMessage.bind(messageProcessor));
 
     // Handle graceful shutdown
     process.on('SIGINT', async () => {

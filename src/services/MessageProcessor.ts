@@ -14,11 +14,12 @@ import Salary from '../models/Salary';
 import Company from '../models/Company';
 import Location from '../models/Location';
 import WorkMode from '../models/WorkMode';
+import '../models/associations';
 
 dotenv.config();
 
 // Define batch size limits in MB
-const BATCH_SIZE_THRESHOLD_MB = 8;
+const BATCH_SIZE_THRESHOLD_MB = 15;
 // Convert MB to Bytes
 const BATCH_SIZE_BYTES_THRESHOLD = BATCH_SIZE_THRESHOLD_MB * 1024 * 1024;
 
@@ -29,16 +30,21 @@ export class MessageProcessor {
     private currentBatchSize: number = 0;
     private readonly archiveBucketName: string;
     private readonly llmUrl: string;
+    private readonly llmVersion: string;
 
     constructor() {
         if (!process.env.AWS_REGION) {
             throw new Error("AWS_REGION environment variable is not set.");
         }
-        if (!process.env.AWS_S3_ARCHIVE_BUCKET) {
+        if (!process.env.AWS_BUCKET_NAME) {
             throw new Error("AWS_S3_ARCHIVE_BUCKET environment variable is not set.");
         }
-        this.archiveBucketName = process.env.AWS_S3_ARCHIVE_BUCKET;
+        this.archiveBucketName = process.env.AWS_BUCKET_NAME;
         this.s3Client = new S3Client({ region: process.env.AWS_REGION });
+        if(!process.env.LLM_VERSION){
+            throw new Error("LLM_VERSION environment variable is not set.");
+        }
+        this.llmVersion = process.env.LLM_VERSION;
         if (!process.env.LLM_URL) {
             throw new Error("LLM_URL environment variable is not set.");
         }
@@ -91,7 +97,7 @@ export class MessageProcessor {
         }
     }
 
-    async processMessage(message: any): Promise<void> {
+    async processMessage(message: string): Promise<void> {
         await this.archivizeMessage(message);
         
         const promptsGenerator = new PromptsGenerator();
@@ -103,25 +109,52 @@ export class MessageProcessor {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                "model": "gemma3:27b",
+                "model": this.llmVersion,
                 "prompt": prompt,
-                "stream": false
+                "stream": true,
+                "format": "json"
             }),
         });
 
-        if (!apiResponse.ok) {
-            throw new Error(`LLM API request failed with status ${apiResponse.status}`);
+        if (!apiResponse.ok || !apiResponse.body) {
+            throw new Error(`LLM API request failed with status ${apiResponse.status} body ${apiResponse.body}`);
         }
 
-        const response_body = await apiResponse.json();
-        if (!response_body.response) {
+        const reader = apiResponse.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        const responses : string[] = [];
+        while (true) {
+            const { value, done: readerDone } = await reader.read();
+            if (readerDone)
+                break;
+            if (value) {
+                const chunk = decoder.decode(value, { stream: true });
+
+                chunk.split('\n').forEach((line) => {
+                    if (line.trim()) {
+                        try {
+                            const json = JSON.parse(line);
+                            if (json.response && !json.done) {
+                                responses.push(json.response || '');
+                            }
+                        } catch (err) {
+                            console.error('Failed to parse chunk:', line);
+                        }
+                    }
+                });
+            }
+        }
+
+        const response_body = responses.join('');
+        if (!response_body) {
             throw Error('Returned no text from LLM Api');
         }
 
         const transaction = await sequelize.transaction();
         try {
             // Parse the LLM response string into our LlmJobOffer structure
-            const record: JobOfferAttributes = JSON.parse(response_body.response);
+            const record: JobOfferAttributes = JSON.parse(response_body);
 
             // --- Validate essential data ---
             if (!record || typeof record.externalId !== 'number') {
@@ -133,8 +166,6 @@ export class MessageProcessor {
              if (!record.source_url) {
                 throw new Error('Invalid record format: source_url is missing.');
             }
-
-            // --- Process related entities --- 
 
             // 1. Location (Job Location)
             let jobLocationInstance: Location | null = null;

@@ -178,15 +178,4 @@ JobOffer.init(
     }
 );
 
-JobOffer.belongsToMany(Benefit, { through: 'JobOfferBenefits', foreignKey: 'job_offer_id' });
-JobOffer.belongsToMany(Requirement, { through: 'JobOfferRequirements', foreignKey: 'job_offer_id' });
-JobOffer.belongsToMany(WorkMode, { through: 'JobOfferWorkModes', foreignKey: 'job_offer_id' });
-JobOffer.belongsToMany(ContractType, { through: 'JobOfferContractTypes', foreignKey: 'job_offer_id' });
-JobOffer.belongsToMany(Keyword, { through: 'JobOfferKeywords', foreignKey: 'job_offer_id' });
-JobOffer.hasOne(Company, { foreignKey: 'company_id' });
-JobOffer.hasOne(Salary, { foreignKey: 'salary_id' });
-JobOffer.hasOne(Location, { foreignKey: 'location_id' });
-JobOffer.hasOne(Profession, { foreignKey: 'profession_id' });
-JobOffer.hasOne(Industry, { foreignKey: 'industry_id' });
-
 export default JobOffer; 

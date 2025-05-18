@@ -21,8 +21,11 @@ export class QueueService {
       
       // Ensure the queue exists
       await this.channel?.assertQueue(this.queueName, {
-        durable: true
+        durable: false // testing, right value: true
       });
+
+      // Limit concurrency to 3 messages at a time
+      await this.channel.prefetch(1);
 
       console.log('Connected to RabbitMQ');
     } catch (error) {
@@ -40,8 +43,7 @@ export class QueueService {
       await this.channel.consume(this.queueName, async (msg) => {
         if (msg) {
           try {
-            const content = JSON.parse(msg.content.toString());
-            await callback(content);
+            await callback(msg.content.toString());
             this.channel?.ack(msg);
           } catch (error) {
             console.error('Error processing message:', error);

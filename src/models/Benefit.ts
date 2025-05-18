@@ -32,6 +32,4 @@ Benefit.init(
     }
 );
 
-Benefit.belongsToMany(JobOffer, { through: 'JobOfferBenefits', foreignKey: 'benefit_id' });
-
 export default Benefit; 

@@ -32,6 +32,4 @@ ContractType.init(
     }
 );
 
-ContractType.belongsToMany(JobOffer, { through: 'JobOfferContractTypes', foreignKey: 'contract_type_id' });
-
 export default ContractType; 

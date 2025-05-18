@@ -1,6 +1,5 @@
 const JobOfferTemplate = `
-Objective: Extract information from the raw job offer data provided below and map it into a structured JSON object.
-
+Objective: Extract information from the raw job offer data provided below and map it into a JSON object in a single line (no newlines, no indentation, no comments).
 Instructions:
 1. Analyze the "Raw Job Offer Data".
 2. Populate the fields in the "Target JSON Structure" based on the analyzed data.
@@ -14,78 +13,66 @@ Instructions:
 9. Use \`null\` for optional fields where data is missing or cannot be determined (e.g., \`company.description\`, \`location.latitude\`).
 10. Prioritize accuracy and completeness based *only* on the provided raw data.
 11. Output *only* the final JSON object (\`json\`).
-
 Target JSON Structure:
 {
-  "external_id": null, // or number/string if present in raw data
+  "external_id": null, // id as number or string
   "source_url": "string",
-  "source_website": "string_or_null",
+  "source_website": "string",
   "title": "string",
-  "description": "string_or_null",
-  "publication_timestamp": "iso8601_string_or_null",
-  "expires_at": "iso8601_string_or_null",
-  "is_remote_recruitment": null, // boolean_or_null
-  "experience_level": "string_or_null", // e.g., "Junior", "Senior", "Entry-Level"
-
+  "description": "string",
+  "publication_timestamp": "iso8601_string",
+  "expires_at": "iso8601_string",
+  "is_remote_recruitment": null, // boolean
+  "experience_level": "string", // e.g., "Junior", "Senior", "Entry-Level"
   "company": {
     "name": "string",
-    "description": "string_or_null",
-    "is_agency": null, // boolean_or_null
-    "tax_identification_number": "string_or_null",
+    "description": "string",
+    "is_agency": null, // boolean
+    "tax_identification_number": "string",
     "location": { // Company's location
-      "country": "string_or_null",
-      "city": "string_or_null",
-      "latitude": null, // number_or_null
-      "longitude": null, // number_or_null
-      "country_iso_code": "2_letter_string_or_null"
+      "country": "string",
+      "city": "string",
+      "latitude": null, // number
+      "longitude": null, // number
+      "country_iso_code": null //e.g. "PL"
     }
   },
-
   "location": { // Job's location
-    "country": "string_or_null",
-    "city": "string_or_null",
-    "latitude": null, // number_or_null
-    "longitude": null, // number_or_null
-    "country_iso_code": "2_letter_string_or_null"
+    "country": "Polska",
+    "city": "Warszawa",
+    "latitude": null, //number
+    "longitude": null, //number
+    "country_iso_code": null //e.g. "PL"
   },
-
   "salary": {
-    "min_value": null, // number_or_null
-    "max_value": null, // number_or_null
-    "currency": "3_letter_code_or_null", // e.g., "USD", "EUR"
-    "type": "NET", // e.g., "GROSS", "NET"
-    "period": "string_or_null" // e.g., "yearly", "monthly", "hourly"
+    "min_value": null, // number
+    "max_value": null, // number
+    "currency": null, // e.g., "USD", "EUR"
+    "type": "NET", //e.g., "GROSS", "NET"
+    "period": "string" //e.g., "yearly", "monthly", "hourly"
   },
-
-  "industry": { // Primary job industry
-    "name": "string_or_null"
+  "industry": {//Primary job industry
+    "name": "string"
   },
-
-  "profession": { // Primary job profession
-    "name": "string_or_null"
+  "profession": {//Primary job profession
+    "name": "string"
   },
-
-  "benefits": [ // Array of strings
+  "benefits": [
     "string"
   ],
-
-  "requirements": [ // Array of strings
+  "requirements": [
     "string"
   ],
-
-  "work_modes": [ // Array of strings, e.g., "Remote", "Hybrid", "On-site"
+  "work_modes": [//e.g., "Remote", "Hybrid", "On-site"
     "string"
   ],
-
-  "contract_types": [ // Array of strings, e.g., "Full-time", "Part-time", "Contract"
+  "contract_types": [//e.g., "Full-time", "Part-time", "Contract"
     "string"
   ],
-
-  "keywords": [ // Array of strings (relevant skills, technologies, etc.)
+  "keywords": [//relevant skills, technologies, etc.)
     "string"
   ]
 }
-
 Raw Job Offer Data:
 {RAW_JOB_DATA_PLACEHOLDER}
 `
