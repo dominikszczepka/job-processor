@@ -125,13 +125,17 @@ export class MessageProcessor {
         const decoder = new TextDecoder('utf-8');
 
         const responses : string[] = [];
+        let buffer = '';
         while (true) {
             const { value, done: readerDone } = await reader.read();
             if (readerDone)
                 break;
             if (value) {
-                const chunk = decoder.decode(value, { stream: true });
-                chunk.split('\n').forEach((line) => {
+                buffer += decoder.decode(value, { stream: true });
+                let lines = buffer.split('\n');
+                // Keep the last line in the buffer if it's incomplete
+                buffer = lines.pop() || '';
+                for (const line of lines) {
                     if (line.trim()) {
                         try {
                             const json = JSON.parse(line);
@@ -139,10 +143,23 @@ export class MessageProcessor {
                                 responses.push(json.response || '');
                             }
                         } catch (err) {
-                            console.error('Failed to parse chunk:', line);
+                            // If parsing fails, prepend to buffer for next chunk
+                            buffer = line + '\n' + buffer;
+                            break;
                         }
                     }
-                });
+                }
+            }
+        }
+        // Try to parse any remaining buffer after the stream ends
+        if (buffer.trim()) {
+            try {
+                const json = JSON.parse(buffer);
+                if (json.response && !json.done) {
+                    responses.push(json.response || '');
+                }
+            } catch (err) {
+                console.error('Failed to parse final buffer chunk:', buffer);
             }
         }
 
@@ -359,3 +376,4 @@ export class MessageProcessor {
         }
     }
 }
+
