@@ -15,6 +15,7 @@ import Company from '../models/Company';
 import Location from '../models/Location';
 import WorkMode from '../models/WorkMode';
 import '../models/associations';
+import {JobOfferLlmResponse} from "../models/JobOfferLlmResponse";
 
 dotenv.config();
 
@@ -130,7 +131,6 @@ export class MessageProcessor {
                 break;
             if (value) {
                 const chunk = decoder.decode(value, { stream: true });
-
                 chunk.split('\n').forEach((line) => {
                     if (line.trim()) {
                         try {
@@ -154,11 +154,11 @@ export class MessageProcessor {
         const transaction = await sequelize.transaction();
         try {
             // Parse the LLM response string into our LlmJobOffer structure
-            const record: JobOfferAttributes = JSON.parse(response_body);
+            const record: JobOfferLlmResponse = JSON.parse(response_body).json //tesing quirk;
 
             // --- Validate essential data ---
-            if (!record || typeof record.externalId !== 'number') {
-                throw new Error('Invalid record format: externalId is missing or not a number.');
+            if (!record || !record.external_id ) {
+                throw new Error('Invalid record format: externalId is missing');
             }
             if (!record.title) {
                 throw new Error('Invalid record format: title is missing.');
@@ -229,10 +229,10 @@ export class MessageProcessor {
 
             // 5. Industry
             let industryInstance: Industry | null = null;
-            if (record.industry?.name) {
+            if (record.industry) {
                 const [industry] = await Industry.findOrCreate({
-                    where: { name: record.industry.name },
-                    defaults: { name: record.industry.name },
+                    where: { name: record.industry },
+                    defaults: { name: record.industry },
                     transaction
                 });
                 industryInstance = industry;
@@ -240,10 +240,10 @@ export class MessageProcessor {
 
             // 6. Profession
             let professionInstance: Profession | null = null;
-            if (record.profession?.name) {
+            if (record.profession) {
                 const [profession] = await Profession.findOrCreate({
-                    where: { name: record.profession.name },
-                    defaults: { name: record.profession.name },
+                    where: { name: record.profession },
+                    defaults: { name: record.profession },
                     transaction
                 });
                 professionInstance = profession;
@@ -266,23 +266,23 @@ export class MessageProcessor {
                 profession: undefined,
                 benefits: undefined,
                 requirements: undefined,
-                work_modes: undefined,
-                contract_types: undefined,
-                keywords: undefined,
+                workModes: undefined,
+                contractTypes: undefined,
+                keywords: undefined
             };
 
             // Use upsert based on externalId to avoid duplicates
             const [jobOfferInstance] = await JobOffer.upsert(jobOfferData, {
                 transaction,
                 returning: true, // Needed to get the instance back
-                conflictFields: ['externalId'] // Specify the unique key for conflict detection
+                conflictFields: ['external_id'] // Specify the unique key for conflict detection
             });
             
             if (!jobOfferInstance) {
                 throw new Error("Failed to upsert JobOffer record.");
             }
 
-            console.log(`Upserted Job Offer ID: ${jobOfferInstance.job_offer_id}, External ID: ${jobOfferInstance.externalId}`);
+            console.log(`Upserted Job Offer ID: ${jobOfferInstance.job_offer_id}, External ID: ${jobOfferInstance.external_id}`);
 
             // --- Process Many-to-Many relationships ---
 
@@ -290,8 +290,8 @@ export class MessageProcessor {
             if (record.benefits && record.benefits.length > 0) {
                 const benefitInstances = await Promise.all(record.benefits.map(async (benefitData) => {
                     const [benefit] = await Benefit.findOrCreate({
-                        where: { name: benefitData.name },
-                        defaults: { name: benefitData.name },
+                        where: { name: benefitData },
+                        defaults: { name: benefitData },
                         transaction
                     });
                     return benefit;
@@ -303,8 +303,8 @@ export class MessageProcessor {
             if (record.requirements && record.requirements.length > 0) {
                 const requirementInstances = await Promise.all(record.requirements.map(async (reqData) => {
                     const [requirement] = await Requirement.findOrCreate({
-                        where: { name: reqData.name },
-                        defaults: { name: reqData.name },
+                        where: { name: reqData },
+                        defaults: { name: reqData },
                         transaction
                     });
                     return requirement;
@@ -316,8 +316,8 @@ export class MessageProcessor {
             if (record.workModes && record.workModes.length > 0) {
                 const workModeInstances = await Promise.all(record.workModes.map(async (wmData) => {
                     const [workMode] = await WorkMode.findOrCreate({
-                        where: { name: wmData.name },
-                        defaults: { name: wmData.name },
+                        where: { name: wmData },
+                        defaults: { name: wmData },
                         transaction
                     });
                     return workMode;
@@ -328,8 +328,8 @@ export class MessageProcessor {
             if (record.contractTypes && record.contractTypes.length > 0) {
                 const contractTypeInstances = await Promise.all(record.contractTypes.map(async (ctData) => {
                     const [contractType] = await ContractType.findOrCreate({
-                        where: { name: ctData.name },
-                        defaults: { name: ctData.name },
+                        where: { name: ctData },
+                        defaults: { name: ctData },
                         transaction
                     });
                     return contractType;
@@ -340,8 +340,8 @@ export class MessageProcessor {
             if (record.keywords && record.keywords.length > 0) {
                 const keywordInstances = await Promise.all(record.keywords.map(async (kwData) => {
                     const [keyword] = await Keyword.findOrCreate({
-                        where: { name: kwData.name },
-                        defaults: { name: kwData.name },
+                        where: { name: kwData },
+                        defaults: { name: kwData },
                         transaction
                     });
                     return keyword;
@@ -350,7 +350,7 @@ export class MessageProcessor {
             }
 
             await transaction.commit();
-            console.log(`Successfully processed and saved Job Offer with externalId: ${record.externalId}`);
+            console.log(`Successfully processed and saved Job Offer with externalId: ${record.external_id}`);
 
         } catch (error: any) {
             console.error('Error processing message or saving to database:', error);

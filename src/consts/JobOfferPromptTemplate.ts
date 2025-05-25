@@ -51,12 +51,8 @@ Target JSON Structure:
     "type": "NET", //e.g., "GROSS", "NET"
     "period": "string" //e.g., "yearly", "monthly", "hourly"
   },
-  "industry": {//Primary job industry
-    "name": "string"
-  },
-  "profession": {//Primary job profession
-    "name": "string"
-  },
+  "industry": "string",
+  "profession": "string",
   "benefits": [
     "string"
   ],

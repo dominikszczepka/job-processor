@@ -21,7 +21,7 @@ export class QueueService {
       
       // Ensure the queue exists
       await this.channel?.assertQueue(this.queueName, {
-        durable: false // testing, right value: true
+        durable: true
       });
 
       // Limit concurrency to 3 messages at a time

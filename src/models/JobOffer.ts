@@ -13,7 +13,7 @@ import Keyword from './Keyword';
 
 export interface JobOfferAttributes {
     job_offer_id?: number;
-    externalId: number;
+    external_id: string;
     source_url: string;
     source_website?: string | null;
     title: string;
@@ -44,7 +44,7 @@ export interface JobOfferAttributes {
 
 class JobOffer extends Model<JobOfferAttributes> implements JobOfferAttributes {
     public job_offer_id!: number;
-    public externalId!: number;
+    public external_id!: string;
     public source_url!: string;
     public source_website?: string | null;
     public title!: string;
@@ -86,8 +86,8 @@ JobOffer.init(
             allowNull: false,
             defaultValue: DataTypes.NOW,
         },
-        externalId: {
-            type: DataTypes.INTEGER,
+        external_id: {
+            type: DataTypes.STRING,
             allowNull: false,
             unique: true
         },
