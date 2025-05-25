@@ -1,6 +1,7 @@
 # Environment variables
 .env
 
+
 # Node modules
 node_modules/
 
@@ -11,4 +12,7 @@ dist/
 *.log
 
 # Archive directory for messages
-message_archive/ 
+message_archive/
+
+# local files
+.idea

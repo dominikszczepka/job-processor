@@ -16,6 +16,7 @@ import Location from '../models/Location';
 import WorkMode from '../models/WorkMode';
 import '../models/associations';
 import {JobOfferLlmResponse} from "../models/JobOfferLlmResponse";
+import { MessageStreamReader } from "./MessageStreamReader";
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ export class MessageProcessor {
     private readonly archiveBucketName: string;
     private readonly llmUrl: string;
     private readonly llmVersion: string;
+    private messageStreamReader: MessageStreamReader;
 
     constructor() {
         if (!process.env.AWS_REGION) {
@@ -50,6 +52,7 @@ export class MessageProcessor {
             throw new Error("LLM_URL environment variable is not set.");
         }
         this.llmUrl = process.env.LLM_URL;
+        this.messageStreamReader = new MessageStreamReader(this.llmUrl, this.llmVersion);
     }
 
     async archivizeMessage(message: string): Promise<void> {
@@ -104,64 +107,7 @@ export class MessageProcessor {
         const promptsGenerator = new PromptsGenerator();
         const prompt = promptsGenerator.generateJobOfferPrompt(message);
 
-        const apiResponse = await fetch(this.llmUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                "model": this.llmVersion,
-                "prompt": prompt,
-                "stream": true,
-                "format": "json"
-            }),
-        });
-
-        if (!apiResponse.ok || !apiResponse.body) {
-            throw new Error(`LLM API request failed with status ${apiResponse.status} body ${apiResponse.body}`);
-        }
-
-        const reader = apiResponse.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-
-        const responses : string[] = [];
-        let buffer = '';
-        while (true) {
-            const { value, done: readerDone } = await reader.read();
-            if (readerDone)
-                break;
-            if (value) {
-                buffer += decoder.decode(value, { stream: true });
-                let lines = buffer.split('\n');
-                // Keep the last line in the buffer if it's incomplete
-                buffer = lines.pop() || '';
-                for (const line of lines) {
-                    if (line.trim()) {
-                        try {
-                            const json = JSON.parse(line);
-                            if (json.response && !json.done) {
-                                responses.push(json.response || '');
-                            }
-                        } catch (err) {
-                            // If parsing fails, prepend to buffer for next chunk
-                            buffer = line + '\n' + buffer;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        // Try to parse any remaining buffer after the stream ends
-        if (buffer.trim()) {
-            try {
-                const json = JSON.parse(buffer);
-                if (json.response && !json.done) {
-                    responses.push(json.response || '');
-                }
-            } catch (err) {
-                console.error('Failed to parse final buffer chunk:', buffer);
-            }
-        }
+        const responses = await this.messageStreamReader.readResponsesFromPrompt(prompt);
 
         const response_body = responses.join('');
         if (!response_body) {
