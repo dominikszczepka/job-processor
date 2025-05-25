@@ -108,7 +108,6 @@ export class MessageProcessor {
         const prompt = promptsGenerator.generateJobOfferPrompt(message);
 
         const responses = await this.messageStreamReader.readResponsesFromPrompt(prompt);
-
         const response_body = responses.join('');
         if (!response_body) {
             throw Error('Returned no text from LLM Api');
