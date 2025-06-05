@@ -6,6 +6,7 @@ export interface SalaryAttributes {
     min_value?: number | null;
     max_value?: number | null;
     currency?: string | null;
+    type?: string | null;
     period?: string | null;
 }
 
@@ -14,6 +15,7 @@ class Salary extends Model<SalaryAttributes> implements SalaryAttributes {
     public min_value?: number | null;
     public max_value?: number | null;
     public currency?: string | null;
+    public type?: string | null;
     public period?: string | null;
 }
 
@@ -33,6 +35,10 @@ Salary.init(
             allowNull: true,
         },
         currency: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        type: {
             type: DataTypes.STRING,
             allowNull: true,
         },
