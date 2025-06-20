@@ -1,0 +1,2 @@
+const NestedObjectsObjective = `For nested objects (\`company\`, \`location\`, \`salary\`, \`industry\`, \`profession\`), extract the relevant details. If a nested object's data is entirely missing, you *can* omit the object key (e.g., omit \`\"profession\": {}\` if no profession info is found).`;
+export default NestedObjectsObjective; 

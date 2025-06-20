@@ -1,0 +1,2 @@
+const ArraysObjective = `For arrays (\`benefits\`, \`requirements\`, \`work_modes\`, \`contract_types\`, \`keywords\`), list the identified items as strings. If none are found, use an empty array \`[]\`.`;
+export default ArraysObjective; 

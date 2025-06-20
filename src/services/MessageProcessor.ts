@@ -1,8 +1,6 @@
 import dotenv from 'dotenv';
-import JobOfferAttributes from '../models/JobOffer';
 import sequelize from '../config/database';
 import { PromptsGenerator } from "./PromptsGenerator";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import JobOffer from '../models/JobOffer';
 import Benefit from '../models/Benefit';
 import Requirement from '../models/Requirement';
@@ -20,17 +18,9 @@ import { MessageStreamReader } from "./MessageStreamReader";
 
 dotenv.config();
 
-// Define batch size limits in MB
-const BATCH_SIZE_THRESHOLD_MB = 15;
-// Convert MB to Bytes
-const BATCH_SIZE_BYTES_THRESHOLD = BATCH_SIZE_THRESHOLD_MB * 1024 * 1024;
 
 export class MessageProcessor {
     
-    private s3Client: S3Client;
-    private messageBuffer: any[] = [];
-    private currentBatchSize: number = 0;
-    private readonly archiveBucketName: string;
     private readonly llmUrl: string;
     private readonly llmVersion: string;
     private messageStreamReader: MessageStreamReader;
@@ -42,8 +32,6 @@ export class MessageProcessor {
         if (!process.env.AWS_BUCKET_NAME) {
             throw new Error("AWS_S3_ARCHIVE_BUCKET environment variable is not set.");
         }
-        this.archiveBucketName = process.env.AWS_BUCKET_NAME;
-        this.s3Client = new S3Client({ region: process.env.AWS_REGION });
         if(!process.env.LLM_VERSION){
             throw new Error("LLM_VERSION environment variable is not set.");
         }
@@ -55,54 +43,7 @@ export class MessageProcessor {
         this.messageStreamReader = new MessageStreamReader(this.llmUrl, this.llmVersion);
     }
 
-    async archivizeMessage(message: string): Promise<void> {
-        try {
-            const parsedMessage = JSON.parse(message);
-            const messageSizeBytes = Buffer.byteLength(message, 'utf8');
-
-            this.messageBuffer.push(parsedMessage);
-            this.currentBatchSize += messageSizeBytes;
-
-            if (this.currentBatchSize >= BATCH_SIZE_BYTES_THRESHOLD) {
-                await this._uploadArchiveBatch();
-            }
-        } catch (error) {
-            console.error('Error processing message for archival:', error);
-        }
-    }
-
-    private async _uploadArchiveBatch(): Promise<void> {
-        const batch = this.messageBuffer;
-        if (batch.length === 0) {
-            return;
-        }
-
-        console.log(`Uploading batch of ${batch.length} messages.`);
-        const batchString = JSON.stringify(batch);
-        const batchSizeBytes = Buffer.byteLength(batchString, 'utf8');
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const key = `archive-batch-${timestamp}.json`;
-
-        const command = new PutObjectCommand({
-            Bucket: this.archiveBucketName,
-            Key: key,
-            Body: batchString,
-            StorageClass: 'DEEP_ARCHIVE',
-            ContentType: 'application/json'
-        });
-
-        try {
-            await this.s3Client.send(command);
-            console.log(`Successfully uploaded batch ${key} (${batchSizeBytes} bytes) to S3 Glacier Deep Archive.`);
-            this.messageBuffer = [];
-            this.currentBatchSize = 0;
-        } catch (error) {
-            console.error(`Failed to upload batch ${key} to S3:`, error);
-        }
-    }
-
     async processMessage(message: string): Promise<void> {
-        await this.archivizeMessage(message);
         
         const promptsGenerator = new PromptsGenerator();
         const prompt = promptsGenerator.generateJobOfferPrompt(message);

@@ -27,13 +27,12 @@ export interface JobOfferAttributes {
     company_id?: number | null;
     salary_id?: number | null;
     location_id?: number | null;
-    industry_id?: number | null;
     profession_id?: number | null;
     
     company?: Company;
     salary?: Salary;
     location?: Location;
-    industry?: Industry;
+    industries?: Industry[];
     profession?: Profession;
     benefits?: Benefit[];
     requirements?: Requirement[];
@@ -64,9 +63,9 @@ class JobOffer extends Model<JobOfferAttributes> implements JobOfferAttributes {
     public readonly company?: Company;
     public readonly salary?: Salary;
     public readonly location?: Location;
-    public readonly industry?: Industry;
     public readonly profession?: Profession;
 
+    public readonly industries?: Industry[];
     public readonly benefits?: Benefit[];
     public readonly requirements?: Requirement[];
     public readonly workModes?: WorkMode[];
@@ -149,14 +148,6 @@ JobOffer.init(
             references: {
                 model: Location, // Use imported model
                 key: 'location_id',
-            },
-            allowNull: true,
-        },
-        industry_id: {
-            type: DataTypes.INTEGER,
-            references: {
-                model: Industry, // Use imported model
-                key: 'industry_id',
             },
             allowNull: true,
         },

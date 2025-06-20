@@ -26,6 +26,9 @@ ContractType.belongsToMany(JobOffer, { through: 'JobOfferContractTypes', foreign
 JobOffer.belongsToMany(Keyword, { through: 'JobOfferKeywords', foreignKey: 'job_offer_id' });
 Keyword.belongsToMany(JobOffer, { through: 'JobOfferKeywords', foreignKey: 'keyword_id' });
 
+JobOffer.belongsToMany(Industry, { through: 'JobOfferIndustries', foreignKey: 'job_offer_id' });
+Keyword.belongsToMany(JobOffer, { through: 'JobOfferIndustries', foreignKey: 'industry_id' });
+
 // One-to-One (hasOne) Associations
 JobOffer.hasOne(Company, { foreignKey: 'company_id' });
 JobOffer.hasOne(Salary, { foreignKey: 'salary_id' });

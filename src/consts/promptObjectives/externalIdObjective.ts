@@ -1,0 +1,2 @@
+const ExternalIdObjective = `**External ID Extraction:**\n    * **Look for a field named \`fullId\`, \`id\`, \`jobOfferWebId\` or similar fields within the raw data.**\n    * **If \`fullId\` exists, use its value as the \`external_id\`.**\n    * **If \`fullId\` does not exist, set \`external_id\` to \`null\`.**`;
+export default ExternalIdObjective; 
